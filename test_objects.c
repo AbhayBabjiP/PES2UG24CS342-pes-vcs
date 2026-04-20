@@ -72,3 +72,27 @@ void test_integrity(void) {
     char path[512];
     object_path(&id, path, sizeof(path));
     printf("Object stored at: %s\n", path);
+
+// Read should detect corruption
+    ObjectType type;
+    void *data;
+    size_t len;
+    int rc = object_read(&id, &type, &data, &len);
+    assert(rc == -1);  // Must fail integrity check
+
+    printf("PASS: integrity check\n");
+}
+
+int main(void) {
+    // Clean slate
+    int rc __attribute__((unused));
+    rc = system("rm -rf .pes");
+    rc = system("mkdir -p .pes/objects .pes/refs/heads");
+
+    test_blob_storage();
+    test_deduplication();
+    test_integrity();
+
+    printf("\nAll Phase 1 tests passed.\n");
+    return 0;
+}
