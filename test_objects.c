@@ -27,6 +27,32 @@ void test_blob_storage(void) {
     char hex[HASH_HEX_SIZE + 1];
     hash_to_hex(&id, hex);
     printf("Stored blob with hash: %s\n", hex);
+// Read it back and verify
+    ObjectType type;
+    void *data;
+    size_t len;
+    rc = object_read(&id, &type, &data, &len);
+    assert(rc == 0);
+    assert(type == OBJ_BLOB);
+    assert(len == strlen(content));
+    assert(memcmp(data, content, len) == 0);
+    free(data);
+
+    printf("PASS: blob storage\n");
+}
+
+void test_deduplication(void) {
+    const char *content = "Duplicate content\n";
+    ObjectID id1, id2;
+
+    object_write(OBJ_BLOB, content, strlen(content), &id1);
+    object_write(OBJ_BLOB, content, strlen(content), &id2);
+
+    assert(memcmp(&id1, &id2, sizeof(ObjectID)) == 0);
+
+    printf("PASS: deduplication\n");
+}
+
 
     char path[512];
     object_path(&id, path, sizeof(path));
