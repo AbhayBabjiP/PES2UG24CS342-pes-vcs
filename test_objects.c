@@ -27,7 +27,12 @@ void test_blob_storage(void) {
     char hex[HASH_HEX_SIZE + 1];
     hash_to_hex(&id, hex);
     printf("Stored blob with hash: %s\n", hex);
-// Read it back and verify
+
+    char path[512];
+    object_path(&id, path, sizeof(path));
+    printf("Object stored at: %s\n", path);
+
+    // Read it back and verify
     ObjectType type;
     void *data;
     size_t len;
@@ -52,6 +57,7 @@ void test_deduplication(void) {
 
     printf("PASS: deduplication\n");
 }
+
 void test_integrity(void) {
     const char *content = "Test integrity\n";
     ObjectID id;
@@ -67,13 +73,7 @@ void test_integrity(void) {
     fputc('X', f);
     fclose(f);
 
-
-
-    char path[512];
-    object_path(&id, path, sizeof(path));
-    printf("Object stored at: %s\n", path);
-
-// Read should detect corruption
+    // Read should detect corruption
     ObjectType type;
     void *data;
     size_t len;
