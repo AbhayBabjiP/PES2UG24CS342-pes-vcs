@@ -86,4 +86,41 @@ int index_status(const Index *index) {
     }
     if (unstaged_count == 0) printf("  (nothing to show)\n");
     printf("\n");
+printf("Untracked files:\n");
+    int untracked_count = 0;
+    DIR *dir = opendir(".");
+    if (dir) {
+        struct dirent *ent;
+        while ((ent = readdir(dir)) != NULL) {
+            // Skip hidden directories, parent directories, and build artifacts
+            if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) continue;
+            if (strcmp(ent->d_name, ".pes") == 0) continue;
+            if (strcmp(ent->d_name, "pes") == 0) continue; // compiled executable
+            if (strstr(ent->d_name, ".o") != NULL) continue; // object files
+
+            // Check if file is tracked in the index
+            int is_tracked = 0;
+            for (int i = 0; i < index->count; i++) {
+                if (strcmp(index->entries[i].path, ent->d_name) == 0) {
+                    is_tracked = 1; 
+                    break;
+                }
+            }
+            
+            if (!is_tracked) {
+                struct stat st;
+                stat(ent->d_name, &st);
+                if (S_ISREG(st.st_mode)) { // Only list regular files for simplicity
+                    printf("  untracked:  %s\n", ent->d_name);
+                    untracked_count++;
+                }
+            }
+        }
+        closedir(dir);
+    }
+    if (untracked_count == 0) printf("  (nothing to show)\n");
+    printf("\n");
+
+    return 0;
+}
 
