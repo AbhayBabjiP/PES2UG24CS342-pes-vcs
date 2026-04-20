@@ -52,6 +52,7 @@ int index_remove(Index *index, const char *path) {
     fprintf(stderr, "error: '%s' is not in the index\n", path);
     return -1;
 }
+
 // Print the status of the working directory.
 //
 // Identifies files that are staged, unstaged (modified/deleted in working dir),
@@ -86,7 +87,8 @@ int index_status(const Index *index) {
     }
     if (unstaged_count == 0) printf("  (nothing to show)\n");
     printf("\n");
-printf("Untracked files:\n");
+
+    printf("Untracked files:\n");
     int untracked_count = 0;
     DIR *dir = opendir(".");
     if (dir) {
@@ -123,6 +125,7 @@ printf("Untracked files:\n");
 
     return 0;
 }
+
 // ─── TODO: Implement these ───────────────────────────────────────────────────
 
 // Load the index from .pes/index.
