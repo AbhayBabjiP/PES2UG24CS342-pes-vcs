@@ -1,3 +1,4 @@
+@@ -0,0 +1,56 @@
 // index.h — Staging area (index) interface
 //
 // The index is a text file (.pes/index) that tracks which files are
