@@ -101,3 +101,81 @@ int commit_serialize(const Commit *commit, void **data_out, size_t *len_out) {
     *len_out = (size_t)n;
     return 0;
 }
+
+// Walk commit history from HEAD to the root.
+int commit_walk(commit_walk_fn callback, void *ctx) {
+    ObjectID id;
+    if (head_read(&id) != 0) return -1;
+
+    while (1) {
+        ObjectType type;
+        void *raw;
+        size_t raw_len;
+        if (object_read(&id, &type, &raw, &raw_len) != 0) return -1;
+
+        Commit c;
+        int rc = commit_parse(raw, raw_len, &c);
+        free(raw);
+        if (rc != 0) return -1;
+
+        callback(&id, &c, ctx);
+
+        if (!c.has_parent) break;
+        id = c.parent;
+    }
+    return 0;
+}
+
+// Read the current HEAD commit hash.
+int head_read(ObjectID *id_out) {
+    FILE *f = fopen(HEAD_FILE, "r");
+    if (!f) return -1;
+    char line[512];
+    if (!fgets(line, sizeof(line), f)) { fclose(f); return -1; }
+    fclose(f);
+    line[strcspn(line, "\r\n")] = '\0'; // strip newline
+
+    char ref_path[512];
+    if (strncmp(line, "ref: ", 5) == 0) {
+        snprintf(ref_path, sizeof(ref_path), "%s/%s", PES_DIR, line + 5);
+        f = fopen(ref_path, "r");
+        if (!f) return -1; // Branch exists but has no commits yet
+        if (!fgets(line, sizeof(line), f)) { fclose(f); return -1; }
+        fclose(f);
+        line[strcspn(line, "\r\n")] = '\0';
+    }
+    return hex_to_hash(line, id_out);
+}
+
+// Update the current branch ref to point to a new commit atomically.
+int head_update(const ObjectID *new_commit) {
+    FILE *f = fopen(HEAD_FILE, "r");
+    if (!f) return -1;
+    char line[512];
+    if (!fgets(line, sizeof(line), f)) { fclose(f); return -1; }
+    fclose(f);
+    line[strcspn(line, "\r\n")] = '\0';
+
+    char target_path[520];
+    if (strncmp(line, "ref: ", 5) == 0) {
+        snprintf(target_path, sizeof(target_path), "%s/%s", PES_DIR, line + 5);
+    } else {
+        snprintf(target_path, sizeof(target_path), "%s", HEAD_FILE); // Detached HEAD
+    }
+
+    char tmp_path[528];
+    snprintf(tmp_path, sizeof(tmp_path), "%s.tmp", target_path);
+    
+    f = fopen(tmp_path, "w");
+    if (!f) return -1;
+    
+    char hex[HASH_HEX_SIZE + 1];
+    hash_to_hex(new_commit, hex);
+    fprintf(f, "%s\n", hex);
+    
+    fflush(f);
+    fsync(fileno(f));
+    fclose(f);
+    
+    return rename(tmp_path, target_path);
+}
