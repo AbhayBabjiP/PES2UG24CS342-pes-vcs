@@ -26,6 +26,7 @@ void hash_to_hex(const ObjectID *id, char *hex_out) {
     }
     hex_out[HASH_HEX_SIZE] = '\0';
 }
+
 int hex_to_hash(const char *hex, ObjectID *id_out) {
     if (strlen(hex) < HASH_HEX_SIZE) return -1;
     for (int i = 0; i < HASH_SIZE; i++) {
@@ -55,7 +56,12 @@ void object_path(const ObjectID *id, char *path_out, size_t path_size) {
 }
 
 int object_exists(const ObjectID *id) {
-    // ─── TODO: Implement these ──────────────────────────────────────────────────
+    char path[512];
+    object_path(id, path, sizeof(path));
+    return access(path, F_OK) == 0;
+}
+
+// ─── TODO: Implement these ──────────────────────────────────────────────────
 
 // Write an object to the store.
 //
@@ -120,8 +126,4 @@ int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_
     // TODO: Implement
     (void)id; (void)type_out; (void)data_out; (void)len_out;
     return -1;
-}
-    char path[512];
-    object_path(id, path, sizeof(path));
-    return access(path, F_OK) == 0;
 }
