@@ -1,3 +1,4 @@
+@@ -0,0 +1,41 @@
 // tree.h — Tree object interface
 //
 // A tree object represents a directory snapshot. Each entry maps a name
