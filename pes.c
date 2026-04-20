@@ -34,3 +34,32 @@ void cmd_init(void) {
 
     printf("Initialized empty PES repository in %s/\n", PES_DIR);
 }
+// Usage: pes add <file>...
+void cmd_add(int argc, char *argv[]) {
+    if (argc < 3) {
+        fprintf(stderr, "Usage: pes add <file>...\n");
+        return;
+    }
+
+    Index index;
+    if (index_load(&index) != 0) {
+        fprintf(stderr, "error: failed to load index\n");
+        return;
+    }
+
+    for (int i = 2; i < argc; i++) {
+        if (index_add(&index, argv[i]) != 0) {
+            fprintf(stderr, "error: failed to add '%s'\n", argv[i]);
+        }
+    }
+}
+
+// Usage: pes status
+void cmd_status(void) {
+    Index index;
+    if (index_load(&index) != 0) {
+        fprintf(stderr, "error: failed to load index\n");
+        return;
+    }
+    index_status(&index);
+}
