@@ -52,6 +52,21 @@ void test_deduplication(void) {
 
     printf("PASS: deduplication\n");
 }
+void test_integrity(void) {
+    const char *content = "Test integrity\n";
+    ObjectID id;
+    object_write(OBJ_BLOB, content, strlen(content), &id);
+
+    // Corrupt the stored file
+    char path[512];
+    object_path(&id, path, sizeof(path));
+
+    FILE *f = fopen(path, "r+b");
+    assert(f != NULL);
+    fseek(f, 20, SEEK_SET);
+    fputc('X', f);
+    fclose(f);
+
 
 
     char path[512];
